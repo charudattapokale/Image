@@ -3,6 +3,7 @@ import numpy as np
 import os
 import random
 import cv2
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 path = r"F:\DS\Dataset\Multi_class_image_segmentation\CamSeq01"
 
@@ -12,9 +13,6 @@ def read_data(path):
     img_path_features_list=[feature for feature in [os.path.join(path, img) for img in os.listdir(path)] if feature not in img_path_labels_list and feature.endswith(".png")] 
     return img_path_labels_list,img_path_features_list
 
-
-
-from keras.preprocessing.image import ImageDataGenerator
 
 # Use only 3 classes.
 # labels = ['background', 'person', 'car', 'road']
