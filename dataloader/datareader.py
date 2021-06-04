@@ -4,13 +4,14 @@ import os
 import random
 import cv2
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from config.config import PATH
 
-path = r"F:\DS\Dataset\Multi_class_image_segmentation\CamSeq01"
 
 
 def read_data(path):
     img_path_labels_list=[os.path.join(path, img) for img in os.listdir(path) if img.endswith("_L.png")]
-    img_path_features_list=[feature for feature in [os.path.join(path, img) for img in os.listdir(path)] if feature not in img_path_labels_list and feature.endswith(".png")] 
+    img_path_features_list=[feature for feature in [os.path.join(path, img) for img in os.listdir(path)] 
+                            if feature not in img_path_labels_list and feature.endswith(".png")] 
     return img_path_labels_list,img_path_features_list
 
 
@@ -19,7 +20,8 @@ def read_data(path):
 
 
 def pre_processing(img):
-    # Random exposure and saturation (0.9 ~ 1.1 scale)
+    ''' Random exposure and saturation (0.9 ~ 1.1 scale)'''
+    
     rand_s = random.uniform(0.9, 1.1)
     rand_v = random.uniform(0.9, 1.1)
 
@@ -35,8 +37,10 @@ def pre_processing(img):
     return img / 127.5 - 1
 
 
-# Get ImageDataGenerator arguments(options) depends on mode - (train, val, test)
+
 def get_data_gen_args(mode):
+    ''' Get ImageDataGenerator arguments(options) depends on mode - (train, val, test)'''
+    
     if mode == 'train' or mode == 'val':
         x_data_gen_args = dict(preprocessing_function=pre_processing,
                                shear_range=0.1,
@@ -66,27 +70,31 @@ def get_data_gen_args(mode):
     return x_data_gen_args, y_data_gen_args
 
 
-# One hot encoding for y_img.
+
 def get_result_map(b_size, y_img):
-    y_img = np.squeeze(y_img, axis=3)
-    result_map = np.zeros((b_size, 256, 512, 4))
+    '''One hot encoding for y_img.'''
+    
+    #y_img = np.squeeze(y_img, axis=-1)
+    result_map = np.zeros((b_size, 256, 512, 3),dtype = np.int8)
 
     # For np.where calculation.
-    person = (y_img == 24)
-    car = (y_img == 26)
-    road = (y_img == 7)
+    person = (y_img == [0,0,0]).all(axis = 2)
+    car = (y_img == [64,0,128]).all(axis = 2)
+    road = (y_img == [128,64,128]).all(axis = 2)
     background = np.logical_not(person + car + road)
 
     result_map[:, :, :, 0] = np.where(background, 1, 0)
     result_map[:, :, :, 1] = np.where(person, 1, 0)
-    result_map[:, :, :, 2] = np.where(car, 1, 0)
-    result_map[:, :, :, 3] = np.where(road, 1, 0)
+    result_map[:, :, :, 2] = np.where(road, 1, 0)
+    #result_map[:, :, :, 3] = np.where(car, 1, 0)
 
     return result_map
 
 
-# Data generator for fit_generator.
+
 def data_generator(d_path, b_size, mode):
+    '''Data generator for fit_generator'''
+    
     data = h5py.File(d_path, 'r')
     x_imgs = data.get('/' + mode + '/x')
     y_imgs = data.get('/' + mode + '/y')
@@ -135,4 +143,12 @@ def data_generator(d_path, b_size, mode):
 
 
 if __name__ == "__main__":
-    label,feature = read_data(path)
+    label,feature = read_data(PATH)
+
+
+def showimage(img):
+    #img = cv2.imread(feature[0],-1)
+    #img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+    cv2.imshow("window_name", img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
