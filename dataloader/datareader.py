@@ -3,7 +3,9 @@ import numpy as np
 import os
 import random
 import cv2
+import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+os.chdir(r"F:\DS\MyGitRepo\Image segmentation")
 from config.config import PATH
 
 
@@ -12,7 +14,7 @@ def read_data(path):
     img_path_labels_list=[os.path.join(path, img) for img in os.listdir(path) if img.endswith("_L.png")]
     img_path_features_list=[feature for feature in [os.path.join(path, img) for img in os.listdir(path)] 
                             if feature not in img_path_labels_list and feature.endswith(".png")] 
-    return img_path_labels_list,img_path_features_list
+    return sorted(img_path_labels_list),sorted(img_path_features_list)
 
 
 # Use only 3 classes.
@@ -75,16 +77,16 @@ def get_result_map(b_size, y_img):
     '''One hot encoding for y_img.'''
     
     #y_img = np.squeeze(y_img, axis=-1)
-    result_map = np.zeros((b_size, 256, 512, 3),dtype = np.int8)
-
+    result_map = np.zeros((b_size, 256, 512, 3),dtype = np.uint8)
+    
     # For np.where calculation.
-    person = (y_img == [0,0,0]).all(axis = 2)
+    bicyclist = (y_img == [0 ,128, 192]).all(axis = 2)
     car = (y_img == [64,0,128]).all(axis = 2)
     road = (y_img == [128,64,128]).all(axis = 2)
-    background = np.logical_not(person + car + road)
+    #background = np.logical_not(bicyclist + car + road)
 
-    result_map[:, :, :, 0] = np.where(background, 1, 0)
-    result_map[:, :, :, 1] = np.where(person, 1, 0)
+    result_map[:, :, :, 0] = np.where(bicyclist, 1, 0)
+    result_map[:, :, :, 1] = np.where(car, 1, 0)
     result_map[:, :, :, 2] = np.where(road, 1, 0)
     #result_map[:, :, :, 3] = np.where(car, 1, 0)
 
@@ -139,16 +141,45 @@ def data_generator(d_path, b_size, mode):
                 x.clear()
                 y.clear()
 
+def read_image(f_path_list,l_path_list):
+    feature = [cv2.resize(img,(512,256) , interpolation = cv2.INTER_AREA) for img in
+               [cv2.imread(i) for i in f_path_list]]
+    label = [cv2.resize(img,(512,256) , interpolation = cv2.INTER_AREA) for img in
+             [cv2.imread(l) for l in l_path_list]]
+    return feature,label
 
 
-
-if __name__ == "__main__":
-    label,feature = read_data(PATH)
-
-
-def showimage(img):
-    #img = cv2.imread(feature[0],-1)
-    #img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+def showimage(img,mode = None,label = None ):
+    if mode != None:
+        img = cv2.imread(img,-1)
+        
+    
+    if label == None:
+        img = np.squeeze(img)
+        img = img*255
+    img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
     cv2.imshow("window_name", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+    
+def see_one_channel(single_channel):
+    zero1 = np.zeros((256,512,2),dtype = np.uint8 )
+    final = (np.concatenate((np.expand_dims(single_channel,axis =-1),zero1),axis = 2))*255
+    cv2.imshow("window_name", final)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    return final
+
+def pic_to_vid(imagelist,fps):
+    h,w,c = imagelist[0].shape
+    size = (w,h) 
+    out = cv2.VideoWriter("Video.avi",cv2.VideoWriter_fourcc(*'mp4v'),fps,size)
+    for img in imagelist:
+        out.write(img)
+    out.release()            
+            
+
+    
+if __name__ == "__main__":
+    label_path_list,feature_path_list = read_data(PATH)
+    feature,label = read_image(feature_path_list,label_path_list)
