@@ -80,12 +80,12 @@ def get_result_map(b_size, y_img):
     result_map = np.zeros((b_size, 256, 512, 3),dtype = np.uint8)
     
     # For np.where calculation.
-    bicyclist = (y_img == [0 ,128, 192]).all(axis = 2)
-    car = (y_img == [64,0,128]).all(axis = 2)
-    road = (y_img == [128,64,128]).all(axis = 2)
+    building = (y_img == [0 ,0, 128]).all(axis = -1)  #bgr
+    car = (y_img == [128,0,64]).all(axis = -1)  #BGR
+    road = (y_img == [128,64,128]).all(axis = -1)
     #background = np.logical_not(bicyclist + car + road)
 
-    result_map[:, :, :, 0] = np.where(bicyclist, 1, 0)
+    result_map[:, :, :, 0] = np.where(building, 1, 0)
     result_map[:, :, :, 1] = np.where(car, 1, 0)
     result_map[:, :, :, 2] = np.where(road, 1, 0)
     #result_map[:, :, :, 3] = np.where(car, 1, 0)
@@ -142,10 +142,10 @@ def data_generator(d_path, b_size, mode):
                 y.clear()
 
 def read_image(f_path_list,l_path_list):
-    feature = [cv2.resize(img,(512,256) , interpolation = cv2.INTER_AREA) for img in
-               [cv2.imread(i) for i in f_path_list]]
-    label = [cv2.resize(img,(512,256) , interpolation = cv2.INTER_AREA) for img in
-             [cv2.imread(l) for l in l_path_list]]
+    feature = np.array([cv2.resize(img,(512,256) , interpolation = cv2.INTER_AREA) for img in
+               [cv2.imread(i) for i in f_path_list]])
+    label = np.array([cv2.resize(img,(512,256) , interpolation = cv2.INTER_AREA) for img in
+             [cv2.imread(l) for l in l_path_list]])
     return feature,label
 
 
