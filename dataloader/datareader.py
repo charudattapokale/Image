@@ -6,7 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 os.chdir(r"F:\DS\MyGitRepo\Image segmentation")
-from config.config import PATH
+from config.config import DATASET_PATH
 
 
 

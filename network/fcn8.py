@@ -287,7 +287,7 @@ def fcn8(num_classes, input_shape, lr_init, lr_decay, weight_path=None):
                     
 if __name__ == "__main__":
     print("started")
-    model = fcn8(3,(256,512,3),0.01,0.1,r"C:\Users\charu\Downloads\vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5")
+    model = fcn8(3,(256,512,3),0.01,0.1,r"F:\DS\MyGitRepo\vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5")
    
     print(type(model))
     
